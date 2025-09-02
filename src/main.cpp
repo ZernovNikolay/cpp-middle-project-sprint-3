@@ -1,5 +1,6 @@
 #include <algorithm>
 
+#include "book.hpp"
 #include "book_database.hpp"
 #include "comparators.hpp"
 #include "filters.hpp"
@@ -20,9 +21,11 @@ int main() {
     // Create a book database
     BookDatabase<std::vector<Book>> db;
 
-    /*
+    Book book1("1984", "George Orwell", 1949, "hello", 4., 190);
 
-    Код закомментирован, чтобы не приводить к ошибке компиляции
+    Book book2("Lord of the Flies", "William Golding", 1954, Genre::Fiction, 4.2, 89);
+
+    // Код закомментирован, чтобы не приводить к ошибке компиляции
 
     // Add some books
     db.EmplaceBack("1984", "George Orwell", 1949, Genre::SciFi, 4., 190);
@@ -55,6 +58,12 @@ int main() {
     auto avrRating = calculateAverageRating(db);
     std::print("Average books rating in library: {}\n", avrRating);
 
+    auto randomBooks = sampleRandomBooks(db, 7);
+    std::print("Random books: {}\n", randomBooks);
+
+    auto topNBooks = getTopNBy(db, 3, bookdb::comp::LessByPopularity());
+    std::print("Top books: {}\n", topNBooks);
+
     // Filters
     auto filtered = filterBooks(db.begin(), db.end(), all_of(YearBetween(1900, 1999), RatingAbove(4.5)));
     std::print("\n\nBooks from the 20th century with rating ≥ 4.5:\n");
@@ -69,7 +78,6 @@ int main() {
     if (orwellBookIt != db.end()) {
         std::print("\n\nTransparent lookup by authors. Found Orwell's book: {}\n", *orwellBookIt);
     }
-    */
 
     return 0;
 }

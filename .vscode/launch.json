@@ -13,7 +13,11 @@
             ],
             "cwd": "${workspaceFolder}/build",
             "preLaunchTask": "GCC: Build Debug app",
-            "initCommands": ["settings set target.disable-aslr false"]
+            "initCommands": [
+                "settings set target.disable-aslr false",
+                "settings set target.process.stop-on-sharedlibrary-events false",
+                "breakpoint set -E C++ -C continue"
+            ],
         }
     ]
 }
