@@ -32,7 +32,7 @@ struct LessByRating {
     bool operator()(const Book &lhs, const Book &rhs) const {
         if (std::abs(lhs.rating - rhs.rating) < 0.01)
             return lhs < rhs;
-        return lhs.rating > rhs.rating;
+        return lhs.rating < rhs.rating;
     }
 };
 
@@ -41,7 +41,7 @@ struct LessByPopularity {
     bool operator()(const Book &lhs, const Book &rhs) const {
         if (lhs.read_count == rhs.read_count)
             return lhs < rhs;
-        return lhs.read_count > rhs.read_count;
+        return lhs.read_count < rhs.read_count;
     }
 };
 

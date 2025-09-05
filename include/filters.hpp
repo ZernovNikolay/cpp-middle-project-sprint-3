@@ -27,7 +27,7 @@ auto GenreIs(const genre_type &genre) -> BookPredicate auto {
 // Комбинатор ALL - все предикаты должны быть истинны
 template <BookPredicate... Predicates>
 auto all_of(Predicates... predicates) -> BookPredicate auto {
-    return [=](const Book &book) { return (predicates(book) && ...); };
+    return [... ps = std::forward<Predicates>(predicates)](const Book &book) { return (ps(book) && ...); };
 }
 
 // Комбинатор ANY - хотя бы один предикат должен быть истинным

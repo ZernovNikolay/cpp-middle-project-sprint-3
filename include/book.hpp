@@ -206,7 +206,7 @@ struct formatter<bookdb::Genre, char> {
 template <>
 struct formatter<bookdb::Book, char> {
     template <typename FormatContext>
-    auto format(const bookdb::Book book, FormatContext &fc) const {
+    auto format(const bookdb::Book &book, FormatContext &fc) const {
         return format_to(fc.out(),
                          "\"{}\" written by {}. Publication year is {}. Genre: {}. Rating: {}. Read count: {}",
                          book.title, std::string(book.author), book.year, book.genre, book.rating, book.read_count);

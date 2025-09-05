@@ -71,38 +71,42 @@ private:
 };
 
 template <BookIterator Iter, BookSentinel<Iter> Sent>
-GenreRating calculateGenreRatings(Iter begin, Sent end) {
+[[nodiscard]] GenreRating calculateGenreRatings(Iter begin, Sent end) {
 
-    std::vector<std::vector<double>> out_buf(static_cast<size_t>(Genre::Unknown) + 1);
+    std::array<std::pair<double, size_t>, static_cast<size_t>(Genre::Unknown) + 1> out_buf;
 
-    for (auto it = begin; it < end; ++it) {
-        out_buf[static_cast<size_t>(it->genre)].push_back(it->rating);
-    }
+    std::for_each(begin, end, [&out_buf](const Book &book) {
+        out_buf[static_cast<size_t>(book.genre)].first += book.rating;
+        ++out_buf[static_cast<size_t>(book.genre)].second;
+    });
 
     GenreRating result;
 
-    std::transform(out_buf.begin(), out_buf.end(), result.begin(), [](const std::vector<double> &vec) {
-        if (vec.empty())
+    std::transform(out_buf.begin(), out_buf.end(), result.begin(), [](const std::pair<double, size_t> &vec) {
+        if (vec.second == 0)
             return 0.0;
-        return std::reduce(vec.begin(), vec.end(), 0.0) / vec.size();
+        return vec.first / vec.second;
     });
 
     return result;
 }
 
 template <BookContainerLike T>
-double calculateAverageRating(const BookDatabase<T> &cont) {
+[[nodiscard]] double calculateAverageRating(const BookDatabase<T> &cont) {
 
     auto &books = cont.GetBooks();
     if (books.empty())
         return 0;
-    return std::accumulate(books.begin(), books.end(), 0.0,
-                           [](double sum, const Book &product) { return sum + product.rating; }) /
-           books.size();
+
+    double sum = std::transform_reduce(books.begin(), books.end(), 0.0, std::plus<>(),
+                                       [](const Book &product) { return product.rating; });
+
+    return sum / books.size();
 }
 
 template <BookContainerLike T>
-std::vector<std::reference_wrapper<const Book>> sampleRandomBooks(const BookDatabase<T> &cont, size_t number_out) {
+[[nodiscard]] std::vector<std::reference_wrapper<const Book>> sampleRandomBooks(const BookDatabase<T> &cont,
+                                                                                size_t number_out) {
 
     auto &books = cont.GetBooks();
 
@@ -111,42 +115,21 @@ std::vector<std::reference_wrapper<const Book>> sampleRandomBooks(const BookData
     }
 
     std::vector<std::reference_wrapper<const Book>> result;
-    result.reserve(number_out);
-
-    // Алгоритм резервуарной выборки для больших коллекций
-    std::vector<size_t> indexes;
-    indexes.reserve(number_out);
-
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(0.0, 1.0);
-
-    // Алгоритм Кнута для резервуарной выборки
-    for (size_t i = 0; i < number_out; ++i) {
-        indexes.push_back(i);
-    }
-
-    for (size_t i = number_out; i < books.size(); ++i) {
-        size_t j = std::floor(dis(gen) * (i + 1));
-        if (j < number_out) {
-            indexes[j] = i;
-        }
-    }
-
-    for (auto index : indexes) {
-        result.emplace_back(books[index]);
-    }
+    std::sample(cont.begin(), cont.end(), std::back_inserter(result), number_out, std::mt19937{std::random_device{}()});
 
     return result;
 }
 
 template <BookContainerLike T, BookComparator Comp = comp::LessByRating>
-std::vector<std::reference_wrapper<const Book>> getTopNBy(BookDatabase<T> &cont, size_t number_out, Comp comp = {}) {
+[[nodiscard]] std::vector<std::reference_wrapper<const Book>> getTopNBy(BookDatabase<T> &cont, size_t number_out,
+                                                                        Comp comp = {}) {
 
     if (number_out <= 0 || cont.empty())
         return {};
-    if (number_out >= cont.size())
+    if (number_out >= cont.size()) {
+        std::sort(cont.begin(), cont.end(), comp);
         return {cont.begin(), cont.end()};
+    }
 
     // Частичная сортировка - находим n-й наибольший элемент
     std::nth_element(cont.begin(), cont.begin() + number_out, cont.end(), comp);

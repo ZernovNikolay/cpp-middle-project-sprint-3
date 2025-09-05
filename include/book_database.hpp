@@ -23,6 +23,9 @@ public:
     using const_iterator = BookContainer::const_iterator;
     using reverse_iterator = BookContainer::reverse_iterator;
     using const_reverse_iterator = BookContainer::const_reverse_iterator;
+    using value_type = BookContainer::value_type;
+    using reference = BookContainer::reference;
+    using const_reference = BookContainer::const_reference;
 
     using AuthorContainer = std::unordered_map<std::string, size_t>;
 
@@ -32,14 +35,6 @@ public:
         Reserve(init_list.size());
 
         for (const Book &book : init_list) {
-
-            size_t hash = book.GetHash();
-
-            // проверка на то, что такой книги еще нет
-            if (auto it = books_unique_.find(hash); it != books_unique_.end())
-                return;
-
-            books_unique_.insert(hash);
 
             // Прямая обработка для эффективности
             std::string author_str(book.author);
@@ -89,14 +84,6 @@ public:
 
     void PushBack(const Book &book) {
 
-        size_t hash = book.GetHash();
-
-        // проверка на то, что такой книги еще нет
-        if (auto it = books_unique_.find(hash); it != books_unique_.end())
-            return;
-
-        books_unique_.insert(hash);
-
         std::string author_str(book.author);
 
         // Находим или создаем запись об авторе
@@ -115,14 +102,6 @@ public:
 
     void PushBack(Book &&book) {
 
-        size_t hash = book.GetHash();
-
-        // проверка на то, что такой книги еще нет
-        if (auto it = books_unique_.find(hash); it != books_unique_.end())
-            return;
-
-        books_unique_.insert(hash);
-
         std::string author_str(book.author);
 
         // Находим или создаем запись об авторе
@@ -138,16 +117,8 @@ public:
         books_.push_back(std::move(book));
     }
 
-    template <typename Title, typename Author, GenreClass Genre, typename... Args>
-    void EmplaceBack(Title &&title, Author &&author, int year, Genre genre, Args &&...args) {
-
-        size_t hash = GetBookHash(title, author, year, genre);
-
-        // проверка на то, что такой книги еще нет
-        if (auto it = books_unique_.find(hash); it != books_unique_.end())
-            return;
-
-        books_unique_.insert(hash);
+    template <typename Title, typename Author, typename... Args>
+    void EmplaceBack(Title &&title, Author &&author, Args &&...args) {
 
         // Преобразуем автора в строку
         std::string author_str(std::forward<Author>(author));
@@ -161,8 +132,7 @@ public:
         }
 
         // Создаем книгу
-        books_.emplace_back(std::forward<Title>(title), std::string_view(it->first), year, std::forward<Genre>(genre),
-                            std::forward<Args>(args)...);
+        books_.emplace_back(std::forward<Title>(title), std::string_view(it->first), std::forward<Args>(args)...);
     }
 
     const BookContainer &GetBooks() const { return books_; }
@@ -192,7 +162,6 @@ private:
 
 private:
     BookContainer books_;
-    std::unordered_set<size_t> books_unique_;
     AuthorContainer authors_;
 };
 
